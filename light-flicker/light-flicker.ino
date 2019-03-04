@@ -51,7 +51,7 @@ void setup() {
   /******************************************************************************
                                 servo setup
   *******************************************************************************/
-  myservo.attach(9);  // attaches the servo on pin 9 to the servo object
+  myservo.attach(4);  // attaches the servo on pin 4 to the servo object
 
   /******************************************************************************
                                 radio setup
@@ -82,7 +82,7 @@ void loop() {
     char text[32] = "";
     radio.read(&text, sizeof(text));
     led_state = !led_state;
-    digitalWrite(ledPin, led_state);
+    //digitalWrite(ledPin, led_state);
     Serial.println(text);
   }
 
@@ -112,7 +112,7 @@ void loop() {
       buttonState = reading;
 
       // only toggle the LED if the new button state is HIGH
-      if (buttonState == HIGH) {
+      if (buttonState == HIGH) {  
         led_state = !led_state;
       }
     }
