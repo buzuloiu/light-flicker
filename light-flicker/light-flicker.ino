@@ -20,6 +20,9 @@
 *******************************************************************************/
 RF24 radio(7, 8); // CE, CSN
 const byte address[6] = "00001";
+const int ledPin = 3;
+
+
 
 /******************************************************************************
                               servo variables
@@ -31,17 +34,18 @@ int pos = 0;    // variable to store the servo position
 /******************************************************************************
                               button variables
 *******************************************************************************/
-int inPin = 2;         // the number of the input pin
-int outPin = 13;       // the number of the output pin
+// constants won't change. They're used here to set pin numbers:
+const int buttonPin = 2;    // the number of the pushbutton pin
 
-int state = HIGH;      // the current state of the output pin
-int reading;           // the current reading from the input pin
-int previous = LOW;    // the previous reading from the input pin
+// Variables will change:
+int led_state = HIGH;         // the current state of the output pin
+int buttonState;             // the current reading from the input pin
+int lastButtonState = LOW;   // the previous reading from the input pin
 
-// the follow variables are long's because the time, measured in miliseconds,
-// will quickly become a bigger number than can be stored in an int.
-long time = 0;         // the last time the output pin was toggled
-long debounce = 200;   // the debounce time, increase if the output flickers
+// the following variables are unsigned longs because the time, measured in
+// milliseconds, will quickly become a bigger number than can be stored in an int.
+unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
+unsigned long debounceDelay = 50;    // the debounce time; increase if the output flickers
 
 void setup() {
   /******************************************************************************
@@ -53,16 +57,20 @@ void setup() {
                                 radio setup
   *******************************************************************************/
   Serial.begin(9600); //open serial port
+  pinMode(ledPin, OUTPUT);
+
+  delay(50);
   radio.begin(); //start radio
   radio.openReadingPipe(0, address);
   radio.setPALevel(RF24_PA_MIN);
   radio.startListening();
+  digitalWrite(ledPin, led_state);
+
 
   /******************************************************************************
                                 button setup
   *******************************************************************************/
-  pinMode(inPin, INPUT);
-  pinMode(outPin, OUTPUT);
+  pinMode(buttonPin, INPUT);
 }
 
 void loop() {
@@ -73,6 +81,8 @@ void loop() {
   if (radio.available()) {
     char text[32] = "";
     radio.read(&text, sizeof(text));
+    led_state = !led_state;
+    digitalWrite(ledPin, led_state);
     Serial.println(text);
   }
 
@@ -81,34 +91,53 @@ void loop() {
   /******************************************************************************
                                 button code
   *******************************************************************************/
-  reading = digitalRead(inPin);
+  int reading = digitalRead(buttonPin);
 
-  // if the input just went from LOW and HIGH and we've waited long enough
-  // to ignore any noise on the circuit, toggle the output pin and remember
-  // the time
-  if (reading == HIGH && previous == LOW && millis() - time > debounce) {
-    if (state == HIGH)
-      state = LOW;
-    else
-      state = HIGH;
+  // check to see if you just pressed the button
+  // (i.e. the input went from LOW to HIGH), and you've waited long enough
+  // since the last press to ignore any noise:
 
-    time = millis();
+  // If the switch changed, due to noise or pressing:
+  if (reading != lastButtonState) {
+    // reset the debouncing timer
+    lastDebounceTime = millis();
   }
 
-  digitalWrite(outPin, state);
+  if ((millis() - lastDebounceTime) > debounceDelay) {
+    // whatever the reading is at, it's been there for longer than the debounce
+    // delay, so take it as the actual current state:
 
-  previous = reading;
+    // if the button state has changed:
+    if (reading != buttonState) {
+      buttonState = reading;
+
+      // only toggle the LED if the new button state is HIGH
+      if (buttonState == HIGH) {
+        led_state = !led_state;
+      }
+    }
+   
+  }
+   // set the LED:
+  digitalWrite(ledPin, led_state);
+
+  // save the reading. Next time through the loop, it'll be the lastButtonState:
+  lastButtonState = reading;
+
+  
+
 
   /******************************************************************************
                                 servo code
   *******************************************************************************/
-  for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
+  //for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
     // in steps of 1 degree
-    myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(15);                       // waits 15ms for the servo to reach the position
-  }
-  for (pos = 180; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
-    myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(15);                       // waits 15ms for the servo to reach the position
-  }
+    //myservo.write(pos);              // tell servo to go to position in variable 'pos'
+    //delay(15);                       // waits 15ms for the servo to reach the position
+  //}
+  //for (pos = 180; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
+  //  myservo.write(pos);              // tell servo to go to position in variable 'pos'
+  //  delay(15);                       // waits 15ms for the servo to reach the position
+  //}
+
 }

@@ -23,7 +23,7 @@ const byte address[6] = "00001";
 *******************************************************************************/
 MedianFilter test(20, 0);
 CapacitiveSensor capSensor = CapacitiveSensor(4, 2);
-int threshold = 800;
+int threshold = 400;
 const int ledPin = LED_BUILTIN;
 bool led_state = LOW;
 bool pass = false;
@@ -56,13 +56,17 @@ void loop()
   test.in( sensorValue);
   sensorValue = test.out();
 
-  Serial.println(sensorValue);
+  //Serial.println(sensorValue);
 
   if (sensorValue > threshold){
      if( pass == false){
      pass = true;
      led_state = !led_state;
-     digitalWrite(ledPin, led_state);
+     //digitalWrite(ledPin, led_state);
+     const char text[] = "Hello World";
+     Serial.println(text);
+     radio.write(&text, sizeof(text));
+     delay(100);
     }
   }else{
     pass = false;
@@ -71,8 +75,6 @@ void loop()
   /******************************************************************************
                                 radio code
   *******************************************************************************/
-  const char text[] = "Hello World";
-  radio.write(&text, sizeof(text));
-  delay(1000);
+ 
 
 }
