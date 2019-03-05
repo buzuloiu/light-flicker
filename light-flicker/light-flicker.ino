@@ -3,6 +3,7 @@
 *******************************************************************************/
 #include <Servo.h>
 
+
 /******************************************************************************
                               radio includes
 *******************************************************************************/
@@ -10,10 +11,12 @@
 #include <nRF24L01.h>
 #include <RF24.h>
 
+
 /******************************************************************************
                               button includes
 *******************************************************************************/
 //none
+
 
 /******************************************************************************
                               radio variables
@@ -23,13 +26,16 @@ const byte address[6] = "00001";
 const int ledPin = 3;
 
 
-
 /******************************************************************************
                               servo variables
 *******************************************************************************/
 Servo myservo;  // create servo object to control a servo
 // twelve servo objects can be created on most boards
 int pos = 0;    // variable to store the servo position
+const int servoUpperLimit = 180;
+const int servoLowerLimit = 0;
+const int servoPin = 6;
+
 
 /******************************************************************************
                               button variables
@@ -39,6 +45,7 @@ const int buttonPin = 2;    // the number of the pushbutton pin
 
 // Variables will change:
 int led_state = HIGH;         // the current state of the output pin
+int lastLedState = HIGH;
 int buttonState;             // the current reading from the input pin
 int lastButtonState = LOW;   // the previous reading from the input pin
 
@@ -47,11 +54,13 @@ int lastButtonState = LOW;   // the previous reading from the input pin
 unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
 unsigned long debounceDelay = 50;    // the debounce time; increase if the output flickers
 
+
 void setup() {
   /******************************************************************************
                                 servo setup
   *******************************************************************************/
-  myservo.attach(4);  // attaches the servo on pin 4 to the servo object
+  //None
+
 
   /******************************************************************************
                                 radio setup
@@ -71,6 +80,8 @@ void setup() {
                                 button setup
   *******************************************************************************/
   pinMode(buttonPin, INPUT);
+
+
 }
 
 void loop() {
@@ -85,7 +96,6 @@ void loop() {
     //digitalWrite(ledPin, led_state);
     Serial.println(text);
   }
-
 
 
   /******************************************************************************
@@ -112,32 +122,63 @@ void loop() {
       buttonState = reading;
 
       // only toggle the LED if the new button state is HIGH
-      if (buttonState == HIGH) {  
+      if (buttonState == HIGH) {
         led_state = !led_state;
       }
     }
-   
+
   }
-   // set the LED:
-  digitalWrite(ledPin, led_state);
 
   // save the reading. Next time through the loop, it'll be the lastButtonState:
   lastButtonState = reading;
 
-  
+
+  /******************************************************************************
+                                  LED code
+  *******************************************************************************/
+  // set the LED:
+  digitalWrite(ledPin, led_state);
 
 
   /******************************************************************************
-                                servo code
-  *******************************************************************************/
-  //for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
-    // in steps of 1 degree
-    //myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    //delay(15);                       // waits 15ms for the servo to reach the position
-  //}
-  //for (pos = 180; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
-  //  myservo.write(pos);              // tell servo to go to position in variable 'pos'
-  //  delay(15);                       // waits 15ms for the servo to reach the position
-  //}
+                                 servo code
+   *******************************************************************************/
+  if (led_state != lastLedState) {
+    if (lastLedState)
+      switchDown();
+    else
+      switchUp();
+    lastLedState = !lastLedState;
+  }
+}
+
+
+void switchUp() {
+  if (!myservo.attached()) {
+    myservo.attach(servoPin);  // attaches the servo on pin servoPin to the servo object
+  }
+
+  for (pos ; pos <= servoUpperLimit; pos += 1) { // goes from 0 degrees to 180 degrees in steps of 1 degree
+    myservo.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(15);                       // waits 15ms for the servo to reach the position
+  }
+
+
+  myservo.detach();  // attaches the servo on pin 4 to the servo object
 
 }
+
+
+void switchDown() {
+  if (!myservo.attached()) {
+    myservo.attach(servoPin);  // attaches the servo on pin  servoPin to the servo object
+  }
+
+  for (pos ; pos >= servoLowerLimit; pos -= 1) { // goes from 180 degrees to 0 degrees
+    myservo.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(15);                       // waits 15ms for the servo to reach the position
+  }
+  myservo.detach();  // attaches the servo on pin 4 to the servo object
+
+}
+

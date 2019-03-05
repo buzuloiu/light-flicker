@@ -4,12 +4,14 @@
 #include <CapacitiveSensor.h>
 #include <MedianFilter.h>
 
+
 /******************************************************************************
                               radio includes
 *******************************************************************************/
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
+
 
 /******************************************************************************
                               radio variables
@@ -39,6 +41,7 @@ void setup()
   radio.setPALevel(RF24_PA_MIN);
   radio.stopListening();
 
+
   /******************************************************************************
                                 touch sensor setup
   *******************************************************************************/
@@ -46,6 +49,7 @@ void setup()
   pinMode(ledPin, OUTPUT);
   delay(50);
 }
+
 
 void loop()
 {
@@ -58,23 +62,24 @@ void loop()
 
   //Serial.println(sensorValue);
 
-  if (sensorValue > threshold){
-     if( pass == false){
-     pass = true;
-     led_state = !led_state;
-     //digitalWrite(ledPin, led_state);
-     const char text[] = "Hello World";
-     Serial.println(text);
-     radio.write(&text, sizeof(text));
-     delay(100);
+  if (sensorValue > threshold) {
+    if ( pass == false) {
+      pass = true;
+      led_state = !led_state;
+      //digitalWrite(ledPin, led_state);
+      const char text[] = "Hello World";
+      Serial.println(text);
+      radio.write(&text, sizeof(text));
+      delay(100);
     }
-  }else{
+  } else {
     pass = false;
   }
+
 
   /******************************************************************************
                                 radio code
   *******************************************************************************/
- 
+
 
 }
