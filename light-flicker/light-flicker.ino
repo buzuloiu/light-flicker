@@ -1,4 +1,10 @@
 /******************************************************************************
+                              general includes
+*******************************************************************************/
+#include <EEPROM.h>
+
+
+/******************************************************************************
                               servo includes
 *******************************************************************************/
 #include <Servo.h>
@@ -19,37 +25,40 @@
 
 
 /******************************************************************************
+                              general variables
+*******************************************************************************/
+int eAddress = 0; //EEPROM address
+
+
+/******************************************************************************
                               radio variables
 *******************************************************************************/
 RF24 radio(7, 8); // CE, CSN
-const byte address[6] = "00001";
-const int ledPin = 3;
+const byte address[6] = "00001"; //radio address
+const int ledPin = 3; //digital pin of the LED
 
 
 /******************************************************************************
                               servo variables
 *******************************************************************************/
 Servo myservo;  // create servo object to control a servo
-// twelve servo objects can be created on most boards
 int pos = 0;    // variable to store the servo position
-const int servoUpperLimit = 180;
-const int servoLowerLimit = 0;
-const int servoPin = 6;
+const int servoUpperLimit = 180; //upper bound of pos
+const int servoLowerLimit = 0; //lower bound of pos
+const int servoPin = 6; //digital pin that servo is attached to
 
 
 /******************************************************************************
                               button variables
 *******************************************************************************/
-// constants won't change. They're used here to set pin numbers:
 const int buttonPin = 2;    // the number of the pushbutton pin
 
 // Variables will change:
-int led_state = HIGH;         // the current state of the output pin
-int lastLedState = HIGH;
+int led_state = HIGH;         // the current state of the LED pin
+int lastLedState = HIGH;      //the last known state of the LED pin
 int buttonState;             // the current reading from the input pin
 int lastButtonState = LOW;   // the previous reading from the input pin
 
-// the following variables are unsigned longs because the time, measured in
 // milliseconds, will quickly become a bigger number than can be stored in an int.
 unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
 unsigned long debounceDelay = 50;    // the debounce time; increase if the output flickers
@@ -59,27 +68,27 @@ void setup() {
   /******************************************************************************
                                 servo setup
   *******************************************************************************/
-  //None
+  switchUp(); //initialize the switch in the down position
 
 
   /******************************************************************************
                                 radio setup
   *******************************************************************************/
   Serial.begin(9600); //open serial port
-  pinMode(ledPin, OUTPUT);
+  pinMode(ledPin, OUTPUT); //set LED as output
 
   delay(50);
   radio.begin(); //start radio
-  radio.openReadingPipe(0, address);
+  radio.openReadingPipe(0, address); //open radui reading pipe
   radio.setPALevel(RF24_PA_MIN);
   radio.startListening();
-  digitalWrite(ledPin, led_state);
+  digitalWrite(ledPin, led_state); //set LED to initial state
 
 
   /******************************************************************************
                                 button setup
   *******************************************************************************/
-  pinMode(buttonPin, INPUT);
+  pinMode(buttonPin, INPUT); //set button as an input
 
 
 }
@@ -89,19 +98,23 @@ void loop() {
   /******************************************************************************
                                 radio code
   *******************************************************************************/
-  if (radio.available()) {
+  if (radio.available()) { //if the radio receives anything, toggle the LED state
     char text[32] = "";
     radio.read(&text, sizeof(text));
     led_state = !led_state;
-    //digitalWrite(ledPin, led_state);
-    Serial.println(text);
+    //Serial.println(text);
+    if (led_state != lastLedState) {
+      toggle();
+    }
+
   }
+
 
 
   /******************************************************************************
                                 button code
   *******************************************************************************/
-  int reading = digitalRead(buttonPin);
+  int reading = digitalRead(buttonPin); //read the button
 
   // check to see if you just pressed the button
   // (i.e. the input went from LOW to HIGH), and you've waited long enough
@@ -109,76 +122,95 @@ void loop() {
 
   // If the switch changed, due to noise or pressing:
   if (reading != lastButtonState) {
-    // reset the debouncing timer
-    lastDebounceTime = millis();
+    lastDebounceTime = millis();     // reset the debouncing timer
+
   }
 
   if ((millis() - lastDebounceTime) > debounceDelay) {
     // whatever the reading is at, it's been there for longer than the debounce
     // delay, so take it as the actual current state:
 
-    // if the button state has changed:
-    if (reading != buttonState) {
+    if (reading != buttonState) { // if the button state has changed:
       buttonState = reading;
 
-      // only toggle the LED if the new button state is HIGH
-      if (buttonState == HIGH) {
+      if (buttonState == HIGH) { // only toggle the LED if the new button state is HIGH
         led_state = !led_state;
+
       }
     }
 
   }
+  if (led_state != lastLedState) {
+    toggle();
+  }
 
-  // save the reading. Next time through the loop, it'll be the lastButtonState:
-  lastButtonState = reading;
+
+
+  lastButtonState = reading;   // save the reading. Next time through the loop, it'll be the lastButtonState:
 
 
   /******************************************************************************
                                   LED code
   *******************************************************************************/
-  // set the LED:
-  digitalWrite(ledPin, led_state);
+
 
 
   /******************************************************************************
-                                 servo code
+                                 LED/servo code
    *******************************************************************************/
   if (led_state != lastLedState) {
-    if (lastLedState)
-      switchDown();
-    else
-      switchUp();
-    lastLedState = !lastLedState;
+    toggle();
   }
+}
+
+
+void toggle() {
+
+  digitalWrite(ledPin, led_state);     // set the LED:
+
+  if (lastLedState) { //move the switch down if the last LED state was ON
+    switchDown();
+    //EEPROM.update(eAddress, led_state); //save servo state to eeprom
+  }
+  else { //move the switch up if the last LED state was OFF
+    switchUp();
+    //EEPROM.update(eAddress, led_state);
+  }
+  Serial.print("LED: ");
+  Serial.println(led_state);
+  Serial.print("Last LED: ");
+  Serial.println(lastLedState);
+  lastLedState = !lastLedState;
 }
 
 
 void switchUp() {
-  if (!myservo.attached()) {
+  /*
+    if (!myservo.attached()) {
     myservo.attach(servoPin);  // attaches the servo on pin servoPin to the servo object
-  }
+    }
 
-  for (pos ; pos <= servoUpperLimit; pos += 1) { // goes from 0 degrees to 180 degrees in steps of 1 degree
+    for (pos = servoLowerLimit ; pos <= servoUpperLimit; pos += 1) { // goes from 0 degrees to 180 degrees in steps of 1 degree
     myservo.write(pos);              // tell servo to go to position in variable 'pos'
     delay(15);                       // waits 15ms for the servo to reach the position
-  }
+    }
 
-
-  myservo.detach();  // attaches the servo on pin 4 to the servo object
-
+    myservo.detach();  // attaches the servo on pin 4 to the servo object
+  */
 }
 
 
 void switchDown() {
-  if (!myservo.attached()) {
+  /*
+    if (!myservo.attached()) {
     myservo.attach(servoPin);  // attaches the servo on pin  servoPin to the servo object
-  }
+    }
 
-  for (pos ; pos >= servoLowerLimit; pos -= 1) { // goes from 180 degrees to 0 degrees
+    for (pos ; pos >= servoLowerLimit; pos -= 1) { // goes from 180 degrees to 0 degrees
     myservo.write(pos);              // tell servo to go to position in variable 'pos'
     delay(15);                       // waits 15ms for the servo to reach the position
-  }
-  myservo.detach();  // attaches the servo on pin 4 to the servo object
-
+    }
+    myservo.detach();  // attaches the servo on pin 4 to the servo object
+  */
 }
 
