@@ -44,7 +44,7 @@ const int ledPin = 3; //digital pin of the LED
 Servo myservo;  // create servo object to control a servo
 int pos = 0;    // variable to store the servo position
 const int servoUpperLimit = 180; //upper bound of pos
-const int servoLowerLimit = 0; //lower bound of pos
+const int servoLowerLimit = 30; //lower bound of pos
 const int servoPin = 6; //digital pin that servo is attached to
 
 
@@ -185,32 +185,43 @@ void toggle() {
 
 
 void switchUp() {
-  /*
+  
     if (!myservo.attached()) {
     myservo.attach(servoPin);  // attaches the servo on pin servoPin to the servo object
     }
 
-    for (pos = servoLowerLimit ; pos <= servoUpperLimit; pos += 1) { // goes from 0 degrees to 180 degrees in steps of 1 degree
+    for (pos ; pos <= servoUpperLimit; pos += 1) { // goes from 0 degrees to 180 degrees in steps of 1 degree
     myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(15);                       // waits 15ms for the servo to reach the position
+    delay(3);                       // waits 15ms for the servo to reach the position
+    }
+
+
+    for (pos ; pos >= 100; pos -= 1) { // goes from 180 degrees to 0 degrees
+    myservo.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(3);
     }
 
     myservo.detach();  // attaches the servo on pin 4 to the servo object
-  */
+  
 }
 
 
 void switchDown() {
-  /*
+  
     if (!myservo.attached()) {
     myservo.attach(servoPin);  // attaches the servo on pin  servoPin to the servo object
     }
 
     for (pos ; pos >= servoLowerLimit; pos -= 1) { // goes from 180 degrees to 0 degrees
     myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(15);                       // waits 15ms for the servo to reach the position
+    delay(3);                       // waits 15ms for the servo to reach the position
+    }
+
+    for (pos ; pos <= 80; pos += 1) { // goes from 0 degrees to 180 degrees in steps of 1 degree
+    myservo.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(3);                       // waits 15ms for the servo to reach the position
     }
     myservo.detach();  // attaches the servo on pin 4 to the servo object
-  */
+  
 }
 
