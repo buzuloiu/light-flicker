@@ -216,6 +216,8 @@ void switchDown() {
     myservo.write(pos);              // tell servo to go to position in variable 'pos'
     delay(3);                       // waits 15ms for the servo to reach the position
     }
+    
+
 
     for (pos ; pos <= 80; pos += 1) { // goes from 0 degrees to 180 degrees in steps of 1 degree
     myservo.write(pos);              // tell servo to go to position in variable 'pos'
