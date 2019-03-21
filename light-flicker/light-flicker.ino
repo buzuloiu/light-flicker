@@ -43,7 +43,7 @@ const int ledPin = 3; //digital pin of the LED
 *******************************************************************************/
 Servo myservo;  // create servo object to control a servo
 int pos = 0;    // variable to store the servo position
-const int servoUpperLimit = 180; //upper bound of pos
+const int servoUpperLimit = 140; //upper bound of pos
 const int servoLowerLimit = 30; //lower bound of pos
 const int servoPin = 6; //digital pin that servo is attached to
 
@@ -196,7 +196,7 @@ void switchUp() {
     }
 
 
-    for (pos ; pos >= 100; pos -= 1) { // goes from 180 degrees to 0 degrees
+    for (pos ; pos >= 90; pos -= 1) { // goes from 180 degrees to 0 degrees
     myservo.write(pos);              // tell servo to go to position in variable 'pos'
     delay(3);
     }
@@ -219,7 +219,7 @@ void switchDown() {
     
 
 
-    for (pos ; pos <= 80; pos += 1) { // goes from 0 degrees to 180 degrees in steps of 1 degree
+    for (pos ; pos <= 90; pos += 1) { // goes from 0 degrees to 180 degrees in steps of 1 degree
     myservo.write(pos);              // tell servo to go to position in variable 'pos'
     delay(3);                       // waits 15ms for the servo to reach the position
     }
