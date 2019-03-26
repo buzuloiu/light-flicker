@@ -19,9 +19,10 @@
 
 
 /******************************************************************************
-                              button includes
+                              touch sensor includes
 *******************************************************************************/
-//none
+#include <CapacitiveSensor.h>
+#include <MedianFilter.h>
 
 
 /******************************************************************************
@@ -49,22 +50,24 @@ const int servoPin = 6; //digital pin that servo is attached to
 
 
 /******************************************************************************
-                              button variables
+                              touch sensor variables
 *******************************************************************************/
-const int buttonPin = 2;    // the number of the pushbutton pin
-
-// Variables will change:
-int led_state = HIGH;         // the current state of the LED pin
-int lastLedState = HIGH;      //the last known state of the LED pin
-int buttonState;             // the current reading from the input pin
-int lastButtonState = LOW;   // the previous reading from the input pin
-
-// milliseconds, will quickly become a bigger number than can be stored in an int.
-unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
-unsigned long debounceDelay = 50;    // the debounce time; increase if the output flickers
+MedianFilter test(20, 0);
+CapacitiveSensor capSensor = CapacitiveSensor(4, 2);
+int threshold = 200;
+//const int ledPin = LED_BUILTIN;
+bool led_state = LOW;
+bool pass = false;
+int lastLedState = HIGH;
 
 
 void setup() {
+
+  /******************************************************************************
+                                touch sensor setup
+   *******************************************************************************/
+  //none
+  
   /******************************************************************************
                                 servo setup
   *******************************************************************************/
@@ -85,11 +88,7 @@ void setup() {
   digitalWrite(ledPin, led_state); //set LED to initial state
 
 
-  /******************************************************************************
-                                button setup
-  *******************************************************************************/
-  pinMode(buttonPin, INPUT); //set button as an input
-
+  
 
 }
 
@@ -110,43 +109,31 @@ void loop() {
   }
 
 
-
-  /******************************************************************************
-                                button code
+/******************************************************************************
+                                touch sensor/ radio code
   *******************************************************************************/
-  int reading = digitalRead(buttonPin); //read the button
+  long sensorValue = capSensor.capacitiveSensor(30);
+  test.in( sensorValue);
+  sensorValue = test.out();
 
-  // check to see if you just pressed the button
-  // (i.e. the input went from LOW to HIGH), and you've waited long enough
-  // since the last press to ignore any noise:
+  Serial.println(sensorValue);
 
-  // If the switch changed, due to noise or pressing:
-  if (reading != lastButtonState) {
-    lastDebounceTime = millis();     // reset the debouncing timer
-
-  }
-
-  if ((millis() - lastDebounceTime) > debounceDelay) {
-    // whatever the reading is at, it's been there for longer than the debounce
-    // delay, so take it as the actual current state:
-
-    if (reading != buttonState) { // if the button state has changed:
-      buttonState = reading;
-
-      if (buttonState == HIGH) { // only toggle the LED if the new button state is HIGH
-        led_state = !led_state;
-
-      }
+  if (sensorValue > threshold) {
+    if ( pass == false) {
+      pass = true;
+      led_state = !led_state;
+      //digitalWrite(ledPin, led_state);
     }
-
+  } else {
+    pass = false;
   }
+  
   if (led_state != lastLedState) {
     toggle();
   }
 
 
 
-  lastButtonState = reading;   // save the reading. Next time through the loop, it'll be the lastButtonState:
 
 
   /******************************************************************************
